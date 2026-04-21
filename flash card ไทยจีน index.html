@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thai For My Sweetheart ❤️</title>
+    <style>
+        :root { --primary: #ff7675; --secondary: #fab1a0; --bg: #fff5f5; }
+        body { font-family: 'Sarabun', sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        
+        .menu-box { margin-bottom: 20px; width: 100%; max-width: 450px; text-align: center; }
+        select { padding: 12px; border-radius: 12px; border: 2px solid var(--primary); font-size: 1rem; width: 100%; outline: none; background: white; }
+
+        .card-container { perspective: 1000px; width: 340px; height: 480px; cursor: pointer; margin-bottom: 20px; }
+        .card { position: relative; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
+        .card.is-flipped { transform: rotateY(180deg); }
+
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 25px; box-sizing: border-box; box-shadow: 0 10px 30px rgba(255,118,117,0.2); border: 5px solid white; }
+        
+        .card-front { background: white; color: #2d3436; }
+        .card-back { background: var(--primary); color: white; transform: rotateY(180deg); text-align: center; }
+
+        .thai-word { font-size: 3.5rem; font-weight: bold; margin: 0; color: var(--primary); }
+        .zh-read { font-size: 1.1rem; color: #636e72; margin-top: 10px; }
+        .meaning-zh { font-size: 2.2rem; font-weight: bold; margin-bottom: 15px; }
+        
+        .example-box { background: rgba(255,255,255,0.15); padding: 15px; border-radius: 15px; width: 100%; font-size: 1rem; text-align: left; line-height: 1.5; }
+        .example-title { font-weight: bold; color: #ffdada; font-size: 0.9rem; margin-bottom: 5px; }
+
+        .audio-btn { background: var(--secondary); border: none; width: 65px; height: 65px; border-radius: 50%; font-size: 1.8rem; cursor: pointer; margin-bottom: 20px; color: white; transition: 0.2s; }
+        .audio-btn:hover { transform: scale(1.1); }
+
+        .controls { display: flex; gap: 10px; width: 340px; }
+        .controls button { flex: 1; padding: 15px; border: none; border-radius: 15px; background: white; color: var(--primary); font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #eee; font-size: 1.1rem; }
+        .shuffle-btn { background: #55efc4 !important; color: white !important; box-shadow: 0 4px 0 #00b894 !important; }
+
+        .info { margin-top: 15px; color: #b2bec3; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+    <div class="menu-box">
+        <h2 style="color: var(--primary); margin: 0 0 15px 0;">🇹🇭 เรียนไทยเพื่อเธอ ❤️</h2>
+        <select id="categorySelect" onchange="filterCategory()">
+            <option value="all">ทั้งหมด (All Categories)</option>
+            <option value="ความรัก">❤️ หมวดความรัก</option>
+            <option value="ทั่วไป">😊 หมวดทั่วไป</option>
+            <option value="อาหาร">🍲 หมวดอาหาร</option>
+        </select>
+    </div>
+
+    <div class="card-container" onclick="flipCard()">
+        <div class="card" id="card">
+            <div class="card-face card-front">
+                <button class="audio-btn" onclick="speak(event)">🔊</button>
+                <h1 class="thai-word" id="th-word">โหลด...</h1>
+                <p class="zh-read" id="zh-read">อ่าน: ...</p>
+                <p style="font-size: 0.8rem; color: #ccc; margin-top: 30px;">(แตะเพื่อดูคำแปลและประโยค)</p>
+            </div>
+            <div class="card-face card-back">
+                <div class="meaning-zh" id="zh-mean">...</div>
+                <div class="example-box">
+                    <div class="example-title">💡 ประโยคตัวอย่าง:</div>
+                    <div id="ex-th" style="font-weight:bold; margin-bottom:5px;"></div>
+                    <div id="ex-zh" style="font-size:0.9rem; opacity:0.9;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="prevCard()">❮</button>
+        <button class="shuffle-btn" onclick="shuffleCards()">🔀 สุ่ม</button>
+        <button onclick="nextCard()">❯</button>
+    </div>
+
+    <p class="info" id="progress">ข้อที่ 1 / 1</p>
+
+    <script>
+                const allVocab = [
+            // --- ❤️ หมวดความรัก & ความรู้สึก (Love & Feelings) ---
+            {cat:"ความรัก", th:"ห่วงนะ", zr:"Hùang-Na (黄那)", zm:"担心你/牵挂", ex_th:"เป็นห่วงนะ พักผ่อนเยอะๆ", ex_zh:"很担心你，多休息 (Hěn dānxīn nǐ, duō xiūxí)"},
+            {cat:"ความรัก", th:"ดีใจ", zr:"Dee-Jai (滴斋)", zm:"开心/高兴", ex_th:"ดีใจที่ได้เจอคุณ", ex_zh:"很高兴见到你 (Hěn gāoxìng jiàn dào nǐ)"},
+            {cat:"ความรัก", th:"เขิน", zr:"Kěrn (肯)", zm:"害羞", ex_th:"อย่ามองหน้าสิ ฉันเขิน", ex_zh:"别看我的脸，我害羞 (Bié kàn wǒ de liǎn, wǒ hàixiū)"},
+            {cat:"ความรัก", th:"โสด", zr:"Sòat (索)", zm:"单身", ex_th:"ตอนนี้คุณโสดไหม?", ex_zh:"现在你单身吗？ (Xiànzài nǐ dānshēn ma?)"},
+            {cat:"ความรัก", th:"งอน", zr:"Ngorn (昂)", zm:"撒娇/生气(小事)", ex_th:"คุณงอนฉันเหรอ?", ex_zh:"你在跟我生气吗？ (Nǐ zài gēn wǒ shēngqì ma?)"},
+            {cat:"ความรัก", th:"จูบ", zr:"Jòop (举)", zm:"亲吻", ex_th:"ขอจูบหน่อยได้ไหม", ex_zh:"可以亲一下吗？ (Kěyǐ qīn yīxià ma?)"},
+            {cat:"ความรัก", th:"กอด", zr:"Gòat (各)", zm:"拥抱", ex_th:"อยากกอดคุณจัง", ex_zh:"真的很想拥抱你 (Zhēn de hěn xiǎng yǒngbào nǐ)"},
+            {cat:"ความรัก", th:"เชื่อใจ", zr:"Chêua-Jai (初斋)", zm:"信任", ex_th:"ฉันเชื่อใจคุณนะ", ex_zh:"我信任你 (Wǒ xìnrèn nǐ)"},
+            {cat:"ความรัก", th:"คิดมาก", zr:"Kít-Mâak (吉骂)", zm:"想太多", ex_th:"อย่าคิดมากนะ", ex_zh:"别想太多哦 (Bié xiǎng tài duō ó)"},
+            {cat:"ความรัก", th:"เหงา", zr:"Ngǎo (昂)", zm:"寂寞", ex_th:"คุณอยู่คนเดียวเหงาไหม?", ex_zh:"你一个人寂寞吗？ (Nǐ yīgè rén jìmò ma?)"},
+            {cat:"ความรัก", th:"ใจดี", zr:"Jai-Dee (斋滴)", zm:"善良/心好", ex_th:"คุณใจดีกับฉันเสมอ", ex_zh:"你对我总是那么好 (Nǐ duì wǒ zǒng shì nàme hǎo)"},
+            {cat:"ความรัก", th:"แต่งงาน", zr:"Tàeng-Ngaan (定安)", zm:"结婚", ex_th:"แต่งงานกับฉันนะ", ex_zh:"跟我结婚吧 (Gēn wǒ jiéhūn ba)"},
+            {cat:"ความรัก", th:"โชคดี", zr:"Chôak-Dee (初滴)", zm:"好运/幸运", ex_th:"โชคดีที่มีคุณ", ex_zh:"很幸运有你 (Hěn xìngyùn yǒu nǐ)"},
+            {cat:"ความรัก", th:"สัญญา", zr:"Sǎn-Yaa (三呀)", zm:"承诺/答应", ex_th:"สัญญาแล้วนะ", ex_zh:"答应我了哦 (Dāyìng wǒle ó)"},
+            {cat:"ความรัก", th:"ปลอบใจ", zr:"Plòap-Jai (波斋)", zm:"安慰", ex_th:"ฉันจะปลอบใจคุณเอง", ex_zh:"我会安慰你的 (Wǒ huì ānwèi nǐ de)"},
+
+            // --- 🍲 หมวดอาหาร & เครื่องดื่ม (Food & Drinks) ---
+            {cat:"อาหาร", th:"น้ำแข็ง", zr:"Nám-Kǎeng (南坑)", zm:"冰块", ex_th:"ขอน้ำแข็งเพิ่มหน่อย", ex_zh:"请多加点冰块 (Qǐng duō jiādiǎn bīngkuài)"},
+            {cat:"อาหาร", th:"ไม่ใส่พริก", zr:"Mâi-Sài-Prík (迈塞匹)", zm:"不放辣椒", ex_th:"ส้มตำไม่ใส่พริก", ex_zh:"青木瓜沙拉不放辣椒 (Qīngmùguā shālà bù fàng làjiāo)"},
+            {cat:"อาหาร", th:"หอม", zr:"Hǒrm (红)", zm:"香", ex_th:"อาหารจานนี้หอมมาก", ex_zh:"这道菜真香 (Zhè dào cài zhēn xiāng)"},
+            {cat:"อาหาร", th:"เปรี้ยว", zr:"Prîao (标)", zm:"酸", ex_th:"มะม่วงนี้เปรี้ยวจัง", ex_zh:"这个芒果真酸 (Zhège mángguǒ zhēn suān)"},
+            {cat:"อาหาร", th:"หวาน", zr:"Wǎan (玩)", zm:"甜", ex_th:"ขนมไทยหวานมาก", ex_zh:"泰国甜点很甜 (Tàiguó tiándiǎn hěn tián)"},
+            {cat:"อาหาร", th:"เค็ม", zr:"Kem (根)", zm:"咸", ex_th:"กับข้าวเค็มไปนิด", ex_zh:"菜有点咸 (Cài yǒudiǎn xián)"},
+            {cat:"อาหาร", th:"ขม", zr:"Kǒm (空)", zm:"苦", ex_th:"กาแฟนี้ขมจัง", ex_zh:"这咖啡真苦 (Zhè kāfēi zhēn kǔ)"},
+            {cat:"อาหาร", th:"ผัก", zr:"Pàk (帕)", zm:"蔬菜", ex_th:"กินผักเยอะๆ นะ", ex_zh:"多吃蔬菜哦 (Duō chī shūcài ó)"},
+            {cat:"อาหาร", th:"ผลไม้", zr:"Pǒn-La-Mâi (蓬拉迈)", zm:"水果", ex_th:"ชอบกินผลไม้ไทย", ex_zh:"喜欢吃泰国水果 (Xǐhuān chī tàiguó shuǐguǒ)"},
+            {cat:"อาหาร", th:"เช็คบิล", zr:"Chék-Bin (切宾)", zm:"买单", ex_th:"เก็บเงินด้วยครับ/เช็คบิล", ex_zh:"请结账 (Qǐng jiézhàng)"},
+            {cat:"อาหาร", th:"ชาไข่มุก", zr:"Chaa-Kǎi-Múk (查盖目)", zm:"珍珠奶茶", ex_th:"สั่งชาไข่มุกกันเถอะ", ex_zh:"我们点珍珠奶茶吧 (Wǒmen diǎn zhēnzhū nǎichá ba)"},
+            {cat:"อาหาร", th:"ตลาดนัด", zr:"Dtà-Làat-Nát (达拉纳)", zm:"夜市/集市", ex_th:"ไปเดินตลาดนัดกันไหม", ex_zh:"去逛夜市吗？ (Qù guàng yèshì ma?)"},
+
+            // --- ✈️ หมวดท่องเที่ยว & สถานที่ (Travel & Places) ---
+            {cat:"ทั่วไป", th:"ที่ไหน", zr:"Têe-Nǎi (提买)", zm:"在哪里", ex_th:"ห้องน้ำอยู่ที่ไหน?", ex_zh:"洗手间在哪里？ (Xǐshǒujiān zài nǎlǐ?)"},
+            {cat:"ทั่วไป", th:"เท่าไหร่", zr:"Tâo-Rǎi (套来)", zm:"多少钱", ex_th:"อันนี้ราคาเท่าไหร่?", ex_zh:"这个多少钱？ (Zhège duōshǎo qián?)"},
+            {cat:"ทั่วไป", th:"ลดได้ไหม", zr:"Lót-Dâai-Mǎi (罗代买)", zm:"能便宜点吗", ex_th:"แพงไป ลดได้ไหม?", ex_zh:"太贵了，能便宜点吗？ (Tài guìle, néng piányí diǎn ma?)"},
+            {cat:"ทั่วไป", th:"ไปเที่ยว", zr:"Bpǎi-Tîao (百标)", zm:"去玩/旅游", ex_th:"อยากไปเที่ยวทะเล", ex_zh:"想去海边旅游 (Xiǎng qù hǎibiān lǚyóu)"},
+            {cat:"ทั่วไป", th:"เครื่องบิน", zr:"Krêuang-Bin (空宾)", zm:"飞机", ex_th:"เครื่องบินออกกี่โมง?", ex_zh:"飞机几点起飞？ (Fēijī jǐ diǎn qǐfēi?)"},
+            {cat:"ทั่วไป", th:"โรงแรม", zr:"Roong-Raem (龙莲)", zm:"酒店", ex_th:"โรงแรมอยู่ไกลไหม", ex_zh:"酒店远吗？ (Jiǔdiàn yuǎn ma?)"},
+            {cat:"ทั่วไป", th:"รถติด", zr:"Rót-Dtìt (罗低)", zm:"堵车", ex_th:"กรุงเทพฯ รถติดมาก", ex_zh:"曼谷堵车很严重 (Màngǔ dǔchē hěn yánzhòng)"},
+            {cat:"ทั่วไป", th:"แผนที่", zr:"Pǎen-Têe (片提)", zm:"地图", ex_th:"ดูแผนที่ก่อนนะ", ex_zh:"先看看地图 (Xiān kàn kàn dìtú)"},
+
+            // --- 🏠 หมวดกิจวัตรประจำวัน (Daily Life) ---
+            {cat:"ทั่วไป", th:"ตื่นนอน", zr:"Dtèun-Norn (顿弄)", zm:"起床", ex_th:"พรุ่งนี้ตื่นกี่โมง?", ex_zh:"明天几点起床？ (Míngtiān jǐ diǎn qǐchuáng?)"},
+            {cat:"ทั่วไป", th:"อาบน้ำ", zr:"Àap-Nám (阿南)", zm:"洗澡", ex_th:"ไปอาบน้ำก่อนนะ", ex_zh:"先去洗澡哦 (Xiān qù xǐzǎo ó)"},
+            {cat:"ทั่วไป", th:"ง่วงนอน", zr:"Ngûang-Norn (昂弄)", zm:"困了", ex_th:"ง่วงนอนแล้ว พักผ่อนนะ", ex_zh:"困了，休息吧 (Kùnle, xiūxí ba)"},
+            {cat:"ทั่วไป", th:"สวย", zr:"Sǔay (岁)", zm:"漂亮", ex_th:"วันนี้คุณสวยมาก", ex_zh:"你今天真漂亮 (Nǐ jīntiān zhēn piàoliang)"},
+            {cat:"ทั่วไป", th:"หล่อ", zr:"Lòr (罗)", zm:"帅", ex_th:"แฟนฉันหล่อที่สุด", ex_zh:"我的男朋友最帅 (Wǒ de nán péngyǒu zuì shuài)"},
+            {cat:"ทั่วไป", th:"ร้อน", zr:"Rórn (龙)", zm:"热", ex_th:"เมืองไทยอากาศร้อน", ex_zh:"泰国天气很热 (Tàiguó tiānqì hěn rè)"},
+            {cat:"ทั่วไป", th:"หนาว", zr:"Nǎao (闹)", zm:"冷", ex_th:"เปิดแอร์หนาวไป", ex_zh:"空调开太冷了 (Kōngtiáo kāi tài lěngle)"},
+            {cat:"ทั่วไป", th:"ฝนตก", zr:"Fǒn-Dtòk (风多)", zm:"下雨", ex_th:"ข้างนอกฝนตกไหม?", ex_zh:"外面下雨吗？ (Wàimiàn xiàyǔ ma?)"},
+
+            // --- 🛍️ หมวดซื้อของ & สี (Shopping & Colors) ---
+            {cat:"ทั่วไป", th:"สีแดง", zr:"Sěe-Daeng (四定)", zm:"红色", ex_th:"ชอบเสื้อสีแดง", ex_zh:"喜欢红色的衣服 (Xǐhuān hóngsè de yīfú)"},
+            {cat:"ทั่วไป", th:"สีขาว", zr:"Sěe-Kǎao (四靠)", zm:"白色", ex_th:"รถสีขาวสวยดี", ex_zh:"白色的车很漂亮 (Báisè de chē hěn piàoliang)"},
+            {cat:"ทั่วไป", th:"ซื้อ", zr:"Súe (色)", zm:"买", ex_th:"อยากซื้ออันนี้", ex_zh:"想买这个 (Xiǎng mǎi zhège)"},
+            {cat:"ทั่วไป", th:"ขาย", zr:"Kǎai (该)", zm:"卖", ex_th:"แม่ค้าขายของเก่ง", ex_zh:"老板很会卖东西 (Lǎobǎn hěn huì mài dōngxī)"},
+            
+            // ... (ข้อมูลชุดที่ 51-150 จะอยู่ในรูปแบบเดียวกัน)
+            {cat:"ความรัก", th:"เป็นแฟนกันนะ", zr:"Bpen-Fan-Gan-Na", zm:"在一起吧/做我女朋友吧", ex_th:"เป็นแฟนกับฉันนะ", ex_zh:"做我女朋友吧 (Zuò wǒ nǚ péngyǒu ba)"},
+            {cat:"ความรัก", th:"ดูแล", zr:"Doo-Lae", zm:"照顾", ex_th:"ฉันจะดูแลคุณเอง", ex_zh:"我会照顾你的 (Wǒ huì zhàogù nǐ de)"},
+            {cat:"ทั่วไป", th:"เหนื่อย", zr:"Nèua-y (内)", zm:"累", ex_th:"ทำงานเหนื่อยไหม?", ex_zh:"工作累吗？ (Gōngzuò lèi ma?)"},
+            {cat:"ทั่วไป", th:"รอ", zr:"Ror (罗)", zm:"等", ex_th:"รอฉันก่อนนะ", ex_zh:"等我一下 (Děng wǒ yīxià)"},
+            {cat:"ความรัก", th:"ตลอดไป", zr:"Dtà-Lòat-Bpǎi", zm:"永远", ex_th:"รักคุณตลอดไป", ex_zh:"永远爱你 (Yǒngyuǎn ài nǐ)"},
+            {cat:"ความรัก", th:"จริงจัง", zr:"Jing-Jang", zm:"认真/真心", ex_th:"ฉันจริงจังกับคุณ", ex_zh:"我对你是认真的 (Wǒ duì nǐ shì rènzhēn de)"},
+            {cat:"ทั่วไป", th:"เข้าใจ", zr:"Kâo-Jai", zm:"明白/理解", ex_th:"คุณเข้าใจฉันไหม?", ex_zh:"你明白我吗？ (Nǐ míngbái wǒ ma?)"},
+            {cat:"ความรัก", th:"พิเศษ", zr:"Pí-Sèat", zm:"特别", ex_th:"คนพิเศษของฉัน", ex_zh:"我特别的人 (Wǒ tèbié de rén)"},
+            {cat:"ความรัก", th:"เชื่อไหม", zr:"Chêua-Mǎi", zm:"信吗", ex_th:"คุณเชื่อฉันไหม?", ex_zh:"你信我吗？ (Nǐ xìn wǒ ma?)"},
+            {cat:"ความรัก", th:"อ้อน", zr:"Ôan (按)", zm:"撒娇", ex_th:"ชอบเวลาคุณอ้อน", ex_zh:"喜欢你撒娇的时候 (Xǐhuān nǐ sājiāo de shíhòu)"},
+            {cat:"ทั่วไป", th:"เก่ง", zr:"Gèng (更)", zm:"厉害/棒", ex_th:"คุณเก่งที่สุดเลย", ex_zh:"你最棒了 (Nǐ zuì bàngle)"},
+            {cat:"ความรัก", th:"ความสุข", zr:"Kwaam-Sùk", zm:"幸福/快乐", ex_th:"คุณคือความสุขของฉัน", ex_zh:"你是我的幸福 (Nǐ shì wǒ de xìngfú)"},
+            {cat:"ทั่วไป", th:"ช่วย", zr:"Chûay (吹)", zm:"帮", ex_th:"ให้ฉันช่วยไหม?", ex_zh:"要我帮忙吗？ (Yào wǒ bāngmáng ma?)"},
+            {cat:"ทั่วไป", th:"ลืม", zr:"Leum (棱)", zm:"忘记", ex_th:"ห้ามลืมฉันนะ", ex_zh:"不许忘记我哦 (Bùxǔ wàngjì wǒ ó)"},
+            {cat:"ทั่วไป", th:"จำ", zr:"Jam (詹)", zm:"记得", ex_th:"ฉันจำได้เสมอ", ex_zh:"我一直记得 (Wǒ yīzhí jìdé)"},
+            {cat:"ความรัก", th:"เข้มแข็ง", zr:"Kêm-Kǎeng", zm:"坚强", ex_th:"ต้องเข้มแข็งนะ", ex_zh:"要坚强哦 (Yào jiānqiáng ó)"},
+            {cat:"ทั่วไป", th:"เพื่อน", zr:"Pêuan (鹏)", zm:"朋友", ex_th:"เราเป็นเพื่อนกัน", ex_zh:"我们是朋友 (Wǒmen shì péngyǒu)"},
+            {cat:"ทั่วไป", th:"พูด", zr:"Pôot (普)", zm:"说", ex_th:"พูดอีกทีได้ไหม?", ex_zh:"能再说一遍吗？ (Néng zàishuō yībiàn ma?)"},
+            {cat:"ทั่วไป", th:"ฟัง", zr:"Fang (方)", zm:"听", ex_th:"ฟังเพลงไทยกัน", ex_zh:"一起听泰国歌 (Yīqǐ tīng tàiguó gē)"},
+            {cat:"ทั่วไป", th:"ดู", zr:"Doo (都)", zm:"看", ex_th:"ดูนี่สิ สวยมาก", ex_zh:"你看这个，真漂亮 (Nǐ kàn zhège, zhēn piàoliang)"},
+            {cat:"ทั่วไป", th:"เดิน", zr:"Dern (登)", zm:"走", ex_th:"เดินไปไกลไหม?", ex_zh:"走过去远吗？ (Zǒu guòqù yuǎn ma?)"},
+            {cat:"ทั่วไป", th:"วิ่ง", zr:"Wîng (咏)", zm:"跑", ex_th:"ไปวิ่งออกกำลังกาย", ex_zh:"去跑步健身 (Qù pǎobù jiànshēn)"},
+            {cat:"ทั่วไป", th:"นอน", zr:"Norn (弄)", zm:"睡觉", ex_th:"ฝันดีนะ ไปนอนแล้ว", ex_zh:"晚安，去睡觉了 (Wǎn'ān, qù shuìjiàole)"},
+            {cat:"ทั่วไป", th:"เล่น", zr:"Lên (练)", zm:"玩", ex_th:"เล่นเกมกันไหม?", ex_zh:"要玩游戏吗？ (Yào wán yóuxì ma?)"},
+            {cat:"ทั่วไป", th:"รวย", zr:"Ruay (瑞)", zm:"有钱", ex_th:"ถ้าฉันรวยจะซื้อให้", ex_zh:"如果我有钱就给你买 (Rúguǒ wǒ yǒu qián jiù gěi nǐ mǎi)"},
+            {cat:"ทั่วไป", th:"จน", zr:"Jon (尊)", zm:"穷", ex_th:"ตอนนี้ฉันจนมาก", ex_zh:"现在我很穷 (Xiànzài wǒ hěn qióng)"},
+            {cat:"ทั่วไป", th:"สะอาด", zr:"Sà-Àat", zm:"干净", ex_th:"ห้องนี้สะอาดมาก", ex_zh:"这个房间很干净 (Zhège fángjiān hěn gānjìng)"},
+            {cat:"ทั่วไป", th:"สกปรก", zr:"Sòk-Gà-Bpròk", zm:"脏", ex_th:"มือสกปรกจัง", ex_zh:"手真脏 (Shǒu zhēn zàng)"},
+            {cat:"ทั่วไป", th:"หอม", zr:"Hǒrm (红)", zm:"闻起来香", ex_th:"คุณตัวหอมจัง", ex_zh:"你身上真香 (Nǐ shēnshang zhēn xiāng)"},
+            {cat:"ทั่วไป", th:"เหม็น", zr:"Měn (门)", zm:"臭", ex_th:"เหม็นอะไรเนี่ย", ex_zh:"这是什么臭味？ (Zhè shì shénme chòuwèi?)"},
+            {cat:"ทั่วไป", th:"เร็ว", zr:"Rēo (辽)", zm:"快", ex_th:"เดินเร็วๆ หน่อย", ex_zh:"走快一点 (Zǒu kuài yīdiǎn)"},
+            {cat:"ทั่วไป", th:"ช้า", zr:"Cháa (差)", zm:"慢", ex_th:"พูดช้าๆ หน่อยนะ", ex_zh:"请说慢一点 (Qǐng shuō màn yīdiǎn)"},
+            {cat:"ทั่วไป", th:"ใหญ่", zr:"Yài (亚)", zm:"大", ex_th:"บ้านหลังใหญ่มาก", ex_zh:"房子很大 (Fángzi hěn dà)"},
+            {cat:"ทั่วไป", th:"เล็ก", zr:"Lék (列)", zm:"小", ex_th:"ตัวเล็กน่ารัก", ex_zh:"个子小小的很可爱 (Gèzi xiǎo xiǎo de hěn kě'ài)"},
+            {cat:"ความรัก", th:"ใจอ่อน", zr:"Jai-Òan", zm:"心软", ex_th:"แพ้ทางคนใจอ่อน", ex_zh:"对心软的人没辙 (Duì xīnruǎn de rén méizhé)"},
+            {cat:"ความรัก", th:"ขี้หึง", zr:"Kêe-Hěung", zm:"爱吃醋", ex_th:"อย่าขี้หึงนักเลย", ex_zh:"别那么爱吃醋 (Bié nàme ài chīcù)"},
+            {cat:"ความรัก", th:"ไว้ใจ", zr:"Wái-Jai", zm:"信任/放心", ex_th:"ฉันไว้ใจคุณที่สุด", ex_zh:"我最信任你 (Wǒ zuì xìnrèn nǐ)"},
+            {cat:"ทั่วไป", th:"ตลก", zr:"Dtà-Lòk", zm:"幽默/搞笑", ex_th:"คุณเป็นคนตลก", ex_zh:"你是个幽默的人 (Nǐ shì gè yōumò de rén)"},
+            {cat:"ทั่วไป", th:"เครียด", zr:"Krîat", zm:"压力/紧张", ex_th:"ทำงานเครียดไหม?", ex_zh:"工作压力大吗？ (Gōngzuò yālì dà ma?)"},
+            {cat:"ทั่วไป", th:"ตกใจ", zr:"Dtòk-Jai", zm:"受惊/吓一跳", ex_th:"ทำฉันตกใจหมดเลย", ex_zh:"吓了我一跳 (Xiàle wǒ yī tiào)"},
+            {cat:"ความรัก", th:"ห่วงใย", zr:"Hùang-Yai", zm:"关怀", ex_th:"ขอบคุณที่ห่วงใยกัน", ex_zh:"谢谢你的关怀 (Xièxiè nǐ de guānhuái)"},
+            {cat:"ทั่วไป", th:"ลึกลับ", zr:"Léuk-Láp", zm:"神秘", ex_th:"คุณดูมีความลับนะ", ex_zh:"你看起很有秘密 (Nǐ kàn qǐ hěn yǒu mìmì)"},
+            {cat:"ความรัก", th:"ลึกซึ้ง", zr:"Léuk-Séung", zm:"深刻/深情", ex_th:"รักของเรามันลึกซึ้ง", ex_zh:"我们的爱很深情 (Wǒmen de ài hěn shēnqíng)"},
+            {cat:"ความรัก", th:"ยอม", zr:"Yorm", zm:"让/答应", ex_th:"ฉันยอมคุณทุกอย่าง", ex_zh:"我什么都迁就你 (Wǒ shénme dōu qiānjiù nǐ)"},
+            {cat:"ความรัก", th:"แอบรัก", zr:"Àep-Rák", zm:"暗恋", ex_th:"เคยแอบรักใครไหม?", ex_zh:"曾经暗恋过谁吗？ (Céngjīng ànliànguò shéi ma?)"},
+            {cat:"ทั่วไป", th:"ตั้งใจ", zr:"Dtâng-Jai", zm:"打算/用心", ex_th:"ฉันตั้งใจทำเพื่อคุณ", ex_zh:"我用心为你做 (Wǒ yòngxīn wèi nǐ zuò)"},
+            {cat:"ทั่วไป", th:"หวัง", zr:"Wǎng", zm:"希望", ex_th:"ฉันหวังว่าคุณจะชอบ", ex_zh:"我希望你会喜欢 (Wǒ xīwàng nǐ huì xǐhuān)"},
+            {cat:"ทั่วไป", th:"เป็นไปได้", zr:"Bpen-Bpǎi-Dâai", zm:"可能", ex_th:"ทุกอย่างเป็นไปได้", ex_zh:"一切皆有可能 (Yīqiè jiē yǒu kěnéng)"},
+            {cat:"ทั่วไป", th:"แน่นอน", zr:"Nâe-Norn", zm:"肯定/当然", ex_th:"ไปแน่นอน ไม่ต้องห่วง", ex_zh:"肯定去，别担心 (Kěndìng qù, bié dānxīn)"},
+            {cat:"ทั่วไป", th:"สงสัย", zr:"Sǒng-Sǎi", zm:"怀疑/好奇", ex_th:"ฉันสงสัยจังเลย", ex_zh:"我很直奇 (Wǒ hěn zhí qí)"},
+            {cat:"ทั่วไป", th:"เงียบ", zr:"Ngîap", zm:"安静/寂静", ex_th:"ทำไมเงียบจังเลย?", ex_zh:"为什么这么安静？ (Wèishéme zhème ānjìng?)"},
+            {cat:"ทั่วไป", th:"ดัง", zr:"Dang", zm:"大声/出名", ex_th:"พูดดังๆ หน่อยนะ", ex_zh:"请说大声一点 (Qǐng shuō dàshēng yīdiǎn)"},
+            {cat:"ความรัก", th:"อ่อนโยน", zr:"Òan-Yoon", zm:"温柔", ex_th:"คุณเป็นคนอ่อนโยน", ex_zh:"你是个温柔的人 (Nǐ shì gè wēnróu de rén)"},
+            {cat:"ความรัก", th:"อบอุ่น", zr:"Òp-Ùn", zm:"温暖", ex_th:"กอดคุณแล้วอบอุ่น", ex_zh:"抱你很温暖 (Bào nǐ hěn wēnnuǎn)"},
+            {cat:"ทั่วไป", th:"สว่าง", zr:"Sà-Wàang", zm:"亮/光明", ex_th:"ไฟสว่างเกินไป", ex_zh:"灯太亮了 (Dēng tài liàngle)"},
+            {cat:"ทั่วไป", th:"มืด", zr:"Mêut", zm:"黑/暗", ex_th:"ข้างนอกมืดมากนะ", ex_zh:"外面很黑哦 (Wàimiàn hěn hēi ó)"},
+            {cat:"ทั่วไป", th:"สูง", zr:"Sǒong", zm:"高", ex_th:"คุณสูงเท่าไหร่?", ex_zh:"你多高？ (Nǐ duō gāo?)"},
+            {cat:"ทั่วไป", th:"เตี้ย", zr:"Dtîa", zm:"矮", ex_th:"ฉันเตี้ยกว่าคุณเยอะ", ex_zh:"我比你矮很多 (Wǒ bǐ nǐ ǎi hěnduō)"},
+            {cat:"ทั่วไป", th:"หนัก", zr:"Nàk", zm:"重", ex_th:"กระเป๋าใบนี้หนักมาก", ex_zh:"这个包很重 (Zhège bāo hěn zhòng)"},
+            {cat:"ทั่วไป", th:"เบา", zr:"Bao", zm:"轻/小声", ex_th:"อันนี้เบามากเลย", ex_zh:"这个很轻 (Zhège hěn qīng)"},
+            {cat:"ทั่วไป", th:"เต็ม", zr:"Dtem", zm:"满", ex_th:"น้ำเต็มแก้วแล้ว", ex_zh:"杯子水满了 (Bēizi shuǐ mǎnle)"},
+            {cat:"ทั่วไป", th:"ว่าง", zr:"Wâang", zm:"空/有空", ex_th:"คุณว่างวันไหน?", ex_zh:"你哪天有空？ (Nǐ nǎ tiān yǒu kòng?)"},
+            {cat:"ทั่วไป", th:"ใหม่", zr:"Mài", zm:"新", ex_th:"ซื้อโทรศัพท์ใหม่เหรอ?", ex_zh:"买新手机了吗？ (Mǎi xīn shǒujī le ma?)"},
+            {cat:"ทั่วไป", th:"เก่า", zr:"Gào", zm:"旧", ex_th:"ของเก่าก็มีค่า", ex_zh:"旧物也有价值 (Jiù wù yěyǒu jiàzhí)"},
+            {cat:"ทั่วไป", th:"ถูก", zr:"Tòok", zm:"便宜/正确", ex_th:"ของชิ้นนี้ถูกมาก", ex_zh:"这个东西很便宜 (Zhège dōngxī hěn piányí)"},
+            {cat:"ทั่วไป", th:"แพง", zr:"Paeng", zm:"贵", ex_th:"อันนี้แพงเกินไป", ex_zh:"这个太贵了 (Zhège tài guìle)"},
+            {cat:"ทั่วไป", th:"ใกล้", zr:"Glâi", zm:"近", ex_th:"บ้านคุณอยู่ใกล้ไหม?", ex_zh:"你家住得近吗？ (Nǐ jiā zhù dé jìn ma?)"},
+            {cat:"ทั่วไป", th:"ไกล", zr:"Glai", zm:"远", ex_th:"เราอยู่ไกลกันจัง", ex_zh:"我们离得很远 (Wǒmen lí dé hěn yuǎn)"},
+            {cat:"ทั่วไป", th:"ยาก", zr:"Yâak", zm:"难", ex_th:"ภาษาไทยยากไหม?", ex_zh:"泰语难吗？ (Tàiyǔ nán ma?)"},
+            {cat:"ทั่วไป", th:"ง่าย", zr:"Ngâai", zm:"容易", ex_th:"รักกันง่ายๆ ก็ดีนะ", ex_zh:"简简单单爱也挺好 (Jiǎn jiǎndān dān ài yě tǐng hǎo)"},
+            {cat:"ทั่วไป", th:"พร้อม", zr:"Prórm", zm:"准备好", ex_th:"คุณพร้อมหรือยัง?", ex_zh:"你准备好了吗？ (Nǐ zhǔnbèi hǎole ma?)"},
+            {cat:"ทั่วไป", th:"เริ่ม", zr:"Rer-m", zm:"开始", ex_th:"เริ่มกันเถอะ", ex_zh:"我们开始吧 (Wǒmen kāishǐ ba)"},
+            {cat:"ทั่วไป", th:"จบ", zr:"Jòp", zm:"结束/完", ex_th:"เรื่องนี้จบแล้ว", ex_zh:"这件事结束了 (Jiàn shì jiéshùle)"},
+            {cat:"ทั่วไป", th:"ลอง", zr:"Loong", zm:"试/尝试", ex_th:"ลองชิมดูสิ", ex_zh:"你试吃看看 (Nǐ shì chī kàn kàn)"},
+            {cat:"ทั่วไป", th:"ใช้", zr:"Chái", zm:"用", ex_th:"อันนี้ใช้ยังไง?", ex_zh:"这个怎么用？ (Zhège zěnme yòng?)"},
+            {cat:"ทั่วไป", th:"ส่ง", zr:"Sòng", zm:"发/送", ex_th:"ส่งรูปให้หน่อยนะ", ex_zh:"发照片给我哦 (Fā zhàopiàn gěi wǒ ó)"},
+            {cat:"ทั่วไป", th:"รับ", zr:"Ráp", zm:"接/受", ex_th:"รับสายฉันด้วย", ex_zh:"接我的电话 (Jiē wǒ de diànhuà)"},
+            {cat:"ทั่วไป", th:"โทร", zr:"Toor", zm:"打(电话)", ex_th:"เดี๋ยวโทรหานะ", ex_zh:"一会给你打电话 (Yīhuǐ gěi nǐ dǎ diànhuà)"},
+            {cat:"ทั่วไป", th:"กลับ", zr:"Glàp", zm:"回", ex_th:"กลับบ้านกี่โมง?", ex_zh:"几点回家？ (Jǐ diǎn huí jiā?)"},
+            {cat:"ทั่วไป", th:"ถึง", zr:"Těung", zm:"到", ex_th:"ถึงแล้วบอกนะ", ex_zh:"到了告诉我 (Dàole gàosù wǒ)"},
+            {cat:"ทั่วไป", th:"ขอ", zr:"Kǒr", zm:"求/请/要", ex_th:"ขอดูหน่อยได้ไหม?", ex_zh:"可以给我看看吗？ (Kěyǐ gěi wǒ kàn kàn ma?)"},
+            {cat:"ทั่วไป", th:"ให้", zr:"Hâi", zm:"给", ex_th:"ฉันให้คุณคนเดียว", ex_zh:"我只给你一个人 (Wǒ zhǐ gěi nǐ yīgè rén)"},
+            {cat:"ทั่วไป", th:"หา", zr:"Hǎa", zm:"找", ex_th:"หาไม่เจอเลย", ex_zh:"找不到了 (Zhǎo bù dàole)"},
+            {cat:"ทั่วไป", th:"ลืม", zr:"Leum", zm:"忘", ex_th:"ลืมเอามือถือมา", ex_zh:"忘了带手机 (Wàngle dài shǒujī)"},
+            {cat:"ทั่วไป", th:"เก็บ", zr:"Gèp", zm:"收/存", ex_th:"เก็บเงินเพื่ออนาคต", ex_zh:"存钱为了未来 (Cún qián wèile wèilái)"},
+            {cat:"ทั่วไป", th:"วาง", zr:"Waang", zm:"放", ex_th:"วางไว้ตรงนั้นแหละ", ex_zh:"放在那里吧 (Fàng zài nàlǐ ba)"},
+            {cat:"ทั่วไป", th:"รอ", zr:"Ror", zm:"等", ex_th:"ฉันรอคุณอยู่", ex_zh:"我正在等你 (Wǒ zhèngzài děng nǐ)"},
+            {cat:"ทั่วไป", th:"กลัว", zr:"Glua", zm:"怕", ex_th:"กลัวความสูงไหม?", ex_zh:"怕高吗？ (Pà gāo ma?)"},
+            {cat:"ทั่วไป", th:"เกลียด", zr:"Glìat", zm:"恨/讨厌", ex_th:"ฉันไม่เกลียดคุณหรอก", ex_zh:"我不恨你 (Wǒ bù hèn nǐ)"},
+            {cat:"ทั่วไป", th:"โกรธ", zr:"Gròat", zm:"生气", ex_th:"อย่าโกรธฉันเลยนะ", ex_zh:"别生我的气了 (Bié shēng wǒ de qìle)"},
+            {cat:"ทั่วไป", th:"เบื่อ", zr:"Bèua", zm:"无聊/腻了", ex_th:"วันว่างที่น่าเบื่อ", ex_zh:"无聊的休息日 (Wúliáo de xiūxí rì)"},
+            {cat:"ทั่วไป", th:"ตก", zr:"Dtòk", zm:"掉/落下", ex_th:"ทำเงินตกหาย", ex_zh:"把钱弄丢了 (Bǎ qián nòng diūle)"},
+            {cat:"ทั่วไป", th:"จับ", zr:"Jàp", zm:"抓/牵/摸", ex_th:"ขอจับมือหน่อย", ex_zh:"可以牵手吗？ (Kěyǐ qiānshǒu ma?)"},
+            {cat:"ทั่วไป", th:"เลือก", zr:"Lêuak", zm:"选", ex_th:"เลือกอันที่ชอบนะ", ex_zh:"选一个喜欢的吧 (Xuǎn yīgè xǐhuān de ba)"},
+            {cat:"ทั่วไป", th:"สอน", zr:"Sǒon", zm:"教", ex_th:"สอนภาษาจีนฉันหน่อย", ex_zh:"教我一点中文吧 (Jiào wǒ yīdiǎn zhōngwén ba)"},
+            {cat:"ทั่วไป", th:"เรียน", zr:"Rian", zm:"学", ex_th:"ฉันกำลังเรียนภาษาไทย", ex_zh:"我正在学泰语 (Wǒ zhèngzài xué tàiyǔ)"},
+            {cat:"ทั่วไป", th:"ทำงาน", zr:"Tam-Ngaan", zm:"工作", ex_th:"วันนี้ทำงานไหม?", ex_zh:"今天工作吗？ (Jīntiān gōngzuò ma?)"},
+            {cat:"ทั่วไป", th:"ว่าง", zr:"Wâang", zm:"空闲", ex_th:"ฉันว่างทั้งวันเลย", ex_zh:"我整天都有空 (Wǒ zhěng tiān dōu yǒu kòng)"},
+            {cat:"ทั่วไป", th:"ยุ่ง", zr:"Yûng", zm:"忙", ex_th:"วันนี้ยุ่งมากไหม?", ex_zh:"今天很忙吗？ (Jīntiān hěn máng ma?)"},
+            {cat:"ทั่วไป", th:"สาย", zr:"Sǎai", zm:"迟到/晚", ex_th:"ขอโทษที่มาสาย", ex_zh:"对不起我迟到了 (Duì bù qǐ wǒ chídào le)"},
+            {cat:"ทั่วไป", th:"ก่อน", zr:"Gòan", zm:"先", ex_th:"กินก่อนเลยนะ", ex_zh:"你先吃吧 (Nǐ xiān chī ba)"},
+            {cat:"ทั่วไป", th:"หลัง", zr:"Lǎng", zm:"后", ex_th:"กินข้าวหลังเลิกงาน", ex_zh:"下班后吃饭 (Xiàbān hòu chīfàn)"},
+            {cat:"ทั่วไป", th:"ระหว่าง", zr:"Ra-Wàang", zm:"之间", ex_th:"ระหว่างเราสองคน", ex_zh:"我们两人之间 (Wǒmen liǎng rén zhī jiān)"},
+            {cat:"ทั่วไป", th:"เหมือน", zr:"Měuan", zm:"像/一样", ex_th:"เหมือนเดิมเลยนะ", ex_zh:"还和以前一样 (Hái hé yǐqián yīyàng)"},
+            {cat:"ทั่วไป", th:"ต่าง", zr:"Dtàang", zm:"不同/差异", ex_th:"เราสองคนต่างกัน", ex_zh:"我们两人不同 (Wǒmen liǎng rén bùtóng)"},
+            {cat:"ทั่วไป", th:"ดีที่สุด", zr:"Dee-Têe-Sùt", zm:"最好", ex_th:"คุณดีที่สุดสำหรับฉัน", ex_zh:"你对我来说是最好的 (Nǐ duì wǒ lái shuō shì zuì hǎo de)"},
+            {cat:"ทั่วไป", th:"แย่", zr:"Yâe", zm:"坏/糟糕", ex_th:"วันนี้อากาศแย่มาก", ex_zh:"今天天气很糟糕 (Jīntiān tiānqì hěn zāogāo)"},
+            {cat:"ทั่วไป", th:"สำคัญ", zr:"Sǎm-Kan", zm:"重要", ex_th:"คุณสำคัญที่สุด", ex_zh:"你最重要 (Nǐ zuì zhòngyào)"},
+            {cat:"ความรัก", th:"ตลอดไป", zr:"Dtà-Lòat-Bpǎi", zm:"永远", ex_th:"รักกันตลอดไปนะ", ex_zh:"要永远相爱哦 (Yào yǒngyuǎn xiāng'ài ó)"},
+            {cat:"ทั่วไป", th:"โอกาส", zr:"Oo-Gàat", zm:"机会", ex_th:"ขอโอกาสอีกครั้ง", ex_zh:"再给一次机会 (Zài gěi yīcì jīhuì)"},
+            {cat:"ทั่วไป", th:"เชื่อ", zr:"Chêua", zm:"信", ex_th:"คุณเชื่อฉันไหม?", ex_zh:"你相信我吗？ (Nǐ xiāngxìn wǒ ma?)"},
+            {cat:"ความรัก", th:"ความรัก", zr:"Kwaam-Rák", zm:"爱", ex_th:"ความรักคืออะไร?", ex_zh:"爱是什么？ (Ài shì shénme?)"},
+            {cat:"ความรัก", th:"เนื้อคู่", zr:"Nêua-Kôo", zm:"灵魂伴侣", ex_th:"คุณคือเนื้อคู่ของฉัน", ex_zh:"你是我的灵魂伴侣 (Nǐ shì wǒ de línghún bànlǚ)"},
+            {cat:"ทั่วไป", th:"ท้องฟ้า", zr:"Tóng-Fáa", zm:"天空", ex_th:"ท้องฟ้าวันนี้สวยจัง", ex_zh:"今天的天空真美 (Jīntiān de tiānkōng zhēnměi)"},
+            {cat:"ทั่วไป", th:"ทะเล", zr:"Ta-Lay", zm:"大海", ex_th:"ชอบไปทะเลไหม?", ex_zh:"喜欢去大海吗？ (Xǐhuān qù dàhǎi ma?)"},
+            {cat:"ทั่วไป", th:"ภูเขา", zr:"Poo-Kǎo", zm:"山", ex_th:"ไปเที่ยวภูเขากัน", ex_zh:"一起去爬山吧 (Yīqǐ qù páshān ba)"},
+            {cat:"ทั่วไป", th:"ดอกไม้", zr:"Dòak-Mâi", zm:"花", ex_th:"ซื้อดอกไม้ให้คุณนะ", ex_zh:"给你买花哦 (Gěi nǐ mǎihuā ó)"},
+            {cat:"ทั่วไป", th:"สีชมพู", zr:"Sěe-Chom-Poo", zm:"粉红色", ex_th:"ชอบสีชมพูที่สุด", ex_zh:"最喜欢粉红色 (Zuì xǐhuān fěnhóngsè)"},
+            {cat:"อาหาร", th:"ข้าว", zr:"Khâo", zm:"饭/米", ex_th:"กินข้าวหรือยัง?", ex_zh:"吃饭了吗？ (Chīfàn le ma?)"},
+            {cat:"อาหาร", th:"ไข่ดาว", zr:"Kǎi-Daao", zm:"荷包蛋", ex_th:"สั่งไข่ดาวเพิ่ม 1 ฟอง", ex_zh:"加一个荷包蛋 (Jiā yīgè hébāodàn)"},
+            {cat:"อาหาร", th:"ไข่เจียว", zr:"Kǎi-Jiao", zm:"煎蛋卷", ex_th:"ข้าวไข่เจียวอร่อยมาก", ex_zh:"煎蛋盖饭很好吃 (Jiāndàn gàifàn hěn hǎochī)"},
+            {cat:"อาหาร", th:"ต้มยำกุ้ง", zr:"Dtom-Yam-Gûng", zm:"冬阴功", ex_th:"คุณกินต้มยำกุ้งได้ไหม?", ex_zh:"你能吃冬阴功吗？ (Nǐ néng chī dōngyīngōng ma?)"},
+            {cat:"อาหาร", th:"ผัดไทย", zr:"Pàt-Thai", zm:"泰式炒河粉", ex_th:"ไปกินผัดไทยเจ้าดังกัน", ex_zh:"去吃那家有名的炒河粉吧 (Qù chī nà jiā yǒumíng de chǎohéfěn ba)"},
+            {cat:"อาหาร", th:"ส้มตำ", zr:"Sôm-Dtam", zm:"青木瓜沙拉", ex_th:"ส้มตำไทยอร่อยมาก", ex_zh:"泰式青木瓜沙拉很好吃 (Tàishì qīngmùguā shālà hěn hǎochī)"},
+            {cat:"ความรัก", th:"พิเศษ", zr:"Pí-Sèat", zm:"特别", ex_th:"คุณเป็นคนพิเศษ", ex_zh:"你是个特别的人 (Nǐ shì gè tèbié de rén)"},
+            {cat:"ความรัก", th:"สำคัญ", zr:"Sǎm-Kan", zm:"重要", ex_th:"คุณสำคัญต่อฉันมาก", ex_zh:"你对我非常重要 (Nǐ duì wǒ fēicháng zhòngyào)"},
+            {cat:"ความรัก", th:"ความหวัง", zr:"Kwaam-Wǎng", zm:"希望", ex_th:"คุณคือความหวังของฉัน", ex_zh:"你是我的希望 (Nǐ shì wǒ de xīwàng)"},
+            {cat:"ความรัก", th:"อนาคต", zr:"A-Naa-Kót", zm:"未来", ex_th:"อนาคตที่มีคุณ", ex_zh:"有你的未来 (Yǒu nǐ de wèilái)"},
+            {cat:"ความรัก", th:"ดูแลกัน", zr:"Doo-Lae-Gan", zm:"互相照顾", ex_th:"เราจะดูแลกันและกัน", ex_zh:"我们要互相照顾 (Wǒmen yào hùxiāng zhàogù)"},
+            {cat:"ความรัก", th:"เสมอ", zr:"Sa-Měr", zm:"总是/一直", ex_th:"รักคุณเสมอ", ex_zh:"一直爱你 (Yīzhí ài nǐ)"}
+        ];
+
+        let currentVocab = [...allVocab];
+        let index = 0;
+
+        function updateCard() {
+            const item = currentVocab[index];
+            document.getElementById('card').classList.remove('is-flipped');
+            setTimeout(() => {
+                document.getElementById('th-word').innerText = item.th;
+                document.getElementById('zh-read').innerText = "อ่านจีน: " + item.zr;
+                document.getElementById('zh-mean').innerText = item.zm;
+                document.getElementById('ex-th').innerText = item.ex_th;
+                document.getElementById('ex-zh').innerText = "จีน: " + item.ex_zh;
+                document.getElementById('progress').innerText = `หมวด: ${item.cat} | ${index + 1} / ${currentVocab.length}`;
+            }, 100);
+        }
+
+        function flipCard() {
+            document.getElementById('card').classList.toggle('is-flipped');
+        }
+
+        function nextCard() {
+            index = (index + 1) % currentVocab.length;
+            updateCard();
+        }
+
+        function prevCard() {
+            index = (index - 1 + currentVocab.length) % currentVocab.length;
+            updateCard();
+        }
+
+        function shuffleCards() {
+            currentVocab.sort(() => Math.random() - 0.5);
+            index = 0;
+            updateCard();
+        }
+
+        function filterCategory() {
+            const cat = document.getElementById('categorySelect').value;
+            if (cat === 'all') {
+                currentVocab = [...allVocab];
+            } else {
+                currentVocab = allVocab.filter(item => item.cat === cat);
+            }
+            index = 0;
+            updateCard();
+        }
+
+        function speak(event) {
+            event.stopPropagation();
+            const text = currentVocab[index].th;
+            const msg = new SpeechSynthesisUtterance(text);
+            msg.lang = 'th-TH';
+            msg.rate = 0.7;
+            window.speechSynthesis.speak(msg);
+        }
+
+        updateCard();
+    </script>
+</body>
+</html>
